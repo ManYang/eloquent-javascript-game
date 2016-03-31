@@ -1,25 +1,31 @@
 var Plan1 = [
-  "                      ",
-  "                      ",
-  "  x              = x  ",
-  "  x         o o    x  ",
-  "  x @      xxxxx   x  ",
-  "  xxxxx            x  ",
-  "      x!!!!!!!!!!!!x  ",
-  "      xxxxxxxxxxxxxx  ",
-  "                      "
+  "                               x",
+  "                               x",
+  "                               x",
+  "                              =x",
+  "                     o o       x",
+  "  x                 xxxxx      x",
+  "  x         o o            o   x",
+  "  x @      xxxxx           xxxxx",
+  "  xxxxx                        x",
+  "      x!!!!!!!!!!!!!!!!!!!!!!!!x",
+  "      xxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "                                "
 ];
 
 var Plan2 = [
-  "                      ",
-  "                      ",
-  "  x             o= x  ",
-  "  x      oo   xxx  x  ",
-  "  x @    xx        x  ",
-  "  xxxx             x  ",
-  "      x!!!!!!!!!!!!x  ",
-  "      xxxxxxxxxxxxxx  ",
-  "                      "
+  "                          o    x",
+  " =          o o         xxx    x",
+  "           xxxxx               x",
+  "                              =x",
+  "  x                  o         x",
+  "  x               xxxxx        x",
+  "  x       o o  =           o   x",
+  "  x @    xxxxx             xxxxx",
+  "  xxxxx                        x",
+  "      x!!!!!!!!!!!!!!!!!!!!!!!!x",
+  "      xxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "                                "
 ];
 
 var GAME_LEVELS =[Plan1,Plan2];
@@ -211,7 +217,6 @@ CanvasDisplay.prototype.clear = function() {
 
 CanvasDisplay.prototype.drawFrame = function(step) {
   this.animationTime += step;
-
   this.updateViewport();
   this.clearDisplay();
   this.drawBackground();
@@ -496,16 +501,25 @@ function runLevel(level, Display, andThen) {
   });
 }
 
+
 function runGame(plans, Display) {
-  function startLevel(n) {
+  function startLevel(n, life) {
     runLevel(new Level(plans[n]), Display, function(status) {
-      if (status == "lost")
-        startLevel(n);
+      if (status == "lost"){
+      	life--;
+      	console.log(life);
+      	if(life<=0){
+      		startLevel(0,3);
+      	}
+      	else{
+      		startLevel(n, life);
+      	}
+      }
       else if (n < plans.length - 1)
-        startLevel(n + 1);
+        startLevel(n + 1, life);
       else
         console.log("You win!");
     });
   }
-  startLevel(0);
+  startLevel(0,3);
 }
