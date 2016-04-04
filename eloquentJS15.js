@@ -40,6 +40,8 @@ function Level(plan) {
   this.height = plan.length;
   this.grid = [];
   this.actors = [];
+  //clear the coin count
+  gameInfo.coin=0;
 
   for (var y = 0; y < this.height; y++) {
     var line = plan[y], gridLine = [];
@@ -292,8 +294,8 @@ CanvasDisplay.prototype.drawBoard = function() {
   this.boardInfo.fillRect(0,0,this.board.width,this.board.height);
   this.boardInfo.font = "20px bold Arial";
   this.boardInfo.fillStyle = "#333";
-  this.boardInfo.fillText("Life: " + gameInfo.life, 10, 50);
-  this.boardInfo.fillText("Coin: " + gameInfo.coin, 150, 50);
+  this.boardInfo.fillText("Remained Life: " + gameInfo.life, 10, 50);
+  this.boardInfo.fillText("Remained Coin: " + gameInfo.coin, 150, 50);
   //this.boardInfo.fill();
 
 };
@@ -488,6 +490,7 @@ Level.prototype.playerTouched = function(type, actor) {
     this.status = "lost";
     this.finishDelay = 1;
   } else if (type == "coin") {
+  	gameInfo.coin--;
     this.actors = this.actors.filter(function(other) {
       return other != actor;
     });
@@ -554,17 +557,18 @@ function runGame(plans, Display) {
   function startLevel(n, life) {
     runLevel(new Level(plans[n]), Display, function(status) {
       if (status == "lost"){
-      	life--;
+      	gameInfo.life--;
       	console.log(life);
-      	if(life<=0){
-      		startLevel(0,3);
+      	if(gameInfo.life<=0){
+      		gameInfo.life=3;
+      		startLevel(0,gameInfo.life);
       	}
       	else{
-      		startLevel(n, life);
+      		startLevel(n, gameInfo.life);
       	}
       }
       else if (n < plans.length - 1)
-        startLevel(n + 1, life);
+        startLevel(n + 1, gameInfo.life);
       else
         console.log("You win!");
     });
