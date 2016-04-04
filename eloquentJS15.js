@@ -30,6 +30,10 @@ var Plan2 = [
 
 var GAME_LEVELS =[Plan1,Plan2];
 
+var gameInfo={
+	life:3,
+	coin: 0
+};
 //reading level
 function Level(plan) {
   this.width = plan[0].length;
@@ -42,17 +46,23 @@ function Level(plan) {
     for (var x = 0; x < this.width; x++) {
       var ch = line[x], fieldType = null;
       var Actor = actorChars[ch];
-      if (Actor)
-        this.actors.push(new Actor(new Vector(x, y), ch));
+      //console.log(Actor);
+      if(ch =='o'){
+      	gameInfo.coin++
+      }
+      if (Actor){
+      	//contain function Coin Player and Lava
+        this.actors.push(new Actor(new Vector(x, y), ch));}
       else if (ch == "x")
         fieldType = "wall";
       else if (ch == "!")
-        fieldType = "lava";
+        fieldType = "lava";	
       gridLine.push(fieldType);
     }
     this.grid.push(gridLine);
+    
   }
-
+//console.log(gameInfo.coin);
   this.player = this.actors.filter(function(actor) {
     return actor.type == "player";
   })[0];
@@ -191,6 +201,15 @@ DOMDisplay.prototype.clear = function() {
 
 //canvas version
 function CanvasDisplay(parent, level) {
+
+	//for display info
+  this.board = document.createElement("canvas");
+  this.board.width = Math.min(600, level.width * scale);
+  this.board.height = 100 ;
+  parent.appendChild(this.board);
+  this.boardInfo = this.board.getContext("2d");
+  console.log('display');
+
   this.canvas = document.createElement("canvas");
   this.canvas.width = Math.min(600, level.width * scale);
   this.canvas.height = Math.min(450, level.height * scale);
@@ -208,11 +227,26 @@ function CanvasDisplay(parent, level) {
     height: this.canvas.height / scale
   };
 
+
   this.drawFrame(0);
 }
 
+CanvasDisplay.prototype.updateInfo = function(type, num) {
+  if(type=='coin'){
+  	this.boardInfo.fillText("Coin: " + gameInfo.coin, 150, 50);
+  	this.boardInfo.fill();  	
+  }
+
+  if(type==life){
+ 	this.boardInfo.fillText("Life: " + gameInfo.life, 10, 50);
+  	this.boardInfo.fill();
+  }
+};
+
 CanvasDisplay.prototype.clear = function() {
   this.canvas.parentNode.removeChild(this.canvas);
+  this.board.parentNode.removeChild(this.board);
+
 };
 
 CanvasDisplay.prototype.drawFrame = function(step) {
@@ -221,6 +255,7 @@ CanvasDisplay.prototype.drawFrame = function(step) {
   this.clearDisplay();
   this.drawBackground();
   this.drawActors();
+  this.drawBoard();
 };
 
 CanvasDisplay.prototype.updateViewport = function() {
@@ -251,6 +286,17 @@ CanvasDisplay.prototype.clearDisplay = function() {
 
 var otherSprites = document.createElement("img");
 otherSprites.src = "img/sprites.png";
+
+CanvasDisplay.prototype.drawBoard = function() {
+  this.boardInfo.fillStyle='rgb(52, 166, 251)'; //background color
+  this.boardInfo.fillRect(0,0,this.board.width,this.board.height);
+  this.boardInfo.font = "20px bold Arial";
+  this.boardInfo.fillStyle = "#333";
+  this.boardInfo.fillText("Life: " + gameInfo.life, 10, 50);
+  this.boardInfo.fillText("Coin: " + gameInfo.coin, 150, 50);
+  //this.boardInfo.fill();
+
+};
 
 CanvasDisplay.prototype.drawBackground = function() {
   var view = this.viewport;
@@ -309,7 +355,8 @@ CanvasDisplay.prototype.drawActors = function() {
     var y = (actor.pos.y - this.viewport.top) * scale;
     if (actor.type == "player") {
       this.drawPlayer(x, y, width, height);
-    } else {
+    } 
+    else {
       var tileX = (actor.type == "coin" ? 2 : 1) * scale;
       this.cx.drawImage(otherSprites,tileX, 0, width, height,x,y, width, height);
     }
@@ -436,6 +483,7 @@ Player.prototype.act = function(step, level, keys) {
 
 //collision of actor and other obj
 Level.prototype.playerTouched = function(type, actor) {
+
   if (type == "lava" && this.status == null) {
     this.status = "lost";
     this.finishDelay = 1;
@@ -521,5 +569,5 @@ function runGame(plans, Display) {
         console.log("You win!");
     });
   }
-  startLevel(0,3);
+  startLevel(0,gameInfo.life);
 }
