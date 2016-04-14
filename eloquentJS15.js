@@ -32,7 +32,9 @@ var GAME_LEVELS =[Plan1,Plan2];
 
 var gameInfo={
 	life:3,
-	coin: 0
+	coin: 0,
+  totalCoin:0,
+  level:1
 };
 //reading level
 function Level(plan) {
@@ -61,6 +63,7 @@ function Level(plan) {
         fieldType = "lava";	
       gridLine.push(fieldType);
     }
+    gameInfo.totalCoin=gameInfo.coin;
     this.grid.push(gridLine);
     
   }
@@ -210,7 +213,7 @@ function CanvasDisplay(parent, level) {
   this.board.height = 100 ;
   parent.appendChild(this.board);
   this.boardInfo = this.board.getContext("2d");
-  console.log('display');
+  //console.log('display');
 
   this.canvas = document.createElement("canvas");
   this.canvas.width = Math.min(600, level.width * scale);
@@ -292,10 +295,12 @@ otherSprites.src = "img/sprites.png";
 CanvasDisplay.prototype.drawBoard = function() {
   this.boardInfo.fillStyle='rgb(52, 166, 251)'; //background color
   this.boardInfo.fillRect(0,0,this.board.width,this.board.height);
-  this.boardInfo.font = "20px bold Arial";
+  this.boardInfo.font = "15px bold Arial";
   this.boardInfo.fillStyle = "#333";
-  this.boardInfo.fillText("Remained Life: " + gameInfo.life, 10, 50);
-  this.boardInfo.fillText("Remained Coin: " + gameInfo.coin, 150, 50);
+  this.boardInfo.fillText("Level: " + gameInfo.level,50, 30);  
+  this.boardInfo.fillText("Total Coin: " + gameInfo.totalCoin, 150, 30);
+  this.boardInfo.fillText("Remained Coin: " + gameInfo.coin, 250, 30);
+  this.boardInfo.fillText("Remained Life: " + gameInfo.life, 400, 30);
   //this.boardInfo.fill();
 
 };
@@ -430,7 +435,6 @@ Coin.prototype.act = function(step) {
   this.pos = this.basePos.plus(new Vector(0, wobblePos));
 };
 
-
 //horizontal move
 var playerXSpeed = 7;
 
@@ -517,14 +521,19 @@ function trackKeys(codes) {
   }
   addEventListener("keydown", handler);
   addEventListener("keyup", handler);
+      pressed.unregister = function() {
+      removeEventListener("keydown", handler);
+      removeEventListener("keyup", handler);
+    };
   return pressed;
 }
 
 //run the game
-function runAnimation(frameFunc) {
+function runAnimation(frameFunc, stop) {
   var lastTime = null;
   function frame(time) {
-    var stop = false;
+    //console.log('stop' + stop);
+    //var stop = false;
     if (lastTime != null) {
       var timeStep = Math.min(time - lastTime, 100) / 1000;
       stop = frameFunc(timeStep) === false;
@@ -536,29 +545,68 @@ function runAnimation(frameFunc) {
   requestAnimationFrame(frame);
 }
 
-var arrows = trackKeys(arrowCodes);
-
 function runLevel(level, Display, andThen) {
   var display = new Display(document.body, level);
-  runAnimation(function(step) {
-    level.animate(step, arrows);
-    display.drawFrame(step);
-    if (level.isFinished()) {
-      display.clear();
-      if (andThen)
-        andThen(level.status);
-      return false;
-    }
-  });
-}
+  var run='y';
+  function pause(event){
+    if(event.keyCode===27){
+        console.log('esc: ' +run);
+      if(run ==='n'){
+        run = 'y';
+        //need sth to stop game
+            runAnimation(function(step) {
+      level.animate(step, arrows);
+      display.drawFrame(step);
+      //console.log('step: ' +step);
+  
+      if (level.isFinished()) {
+        display.clear();
+        removeEventListener('keydown',pause);
+        arrows.unregister();
+        if (andThen)
+          andThen(level.status);
+        return false;
+      }
+    },true);
 
+      }
+      else if(run ==='p'){
+        run='y';
+
+      }
+      else if(run='y'){
+        run='p';
+      }
+    }
+  }
+  console.log('y: ' +run);
+  addEventListener('keydown', pause);
+
+  var arrows = trackKeys(arrowCodes);  
+
+    runAnimation(function(step) {
+      level.animate(step, arrows);
+      display.drawFrame(step);
+      //console.log('step: ' +step);
+  
+      if (level.isFinished()) {
+        display.clear();
+        removeEventListener('keydown',pause);
+        arrows.unregister();
+        if (andThen)
+          andThen(level.status);
+        return false;
+      }
+    },false);
+}
 
 function runGame(plans, Display) {
   function startLevel(n, life) {
+    gameInfo.level=n + 1;
     runLevel(new Level(plans[n]), Display, function(status) {
       if (status == "lost"){
       	gameInfo.life--;
-      	console.log(life);
+      	//console.log(life);
       	if(gameInfo.life<=0){
       		gameInfo.life=3;
       		startLevel(0,gameInfo.life);
@@ -573,5 +621,5 @@ function runGame(plans, Display) {
         console.log("You win!");
     });
   }
-  startLevel(0,gameInfo.life);
+  startLevel(0, gameInfo.life);
 }
